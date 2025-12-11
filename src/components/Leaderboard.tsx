@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './Leaderboard.module.css';
+import { API_BASE } from '../config';
 
 type LeaderboardEntry = {
   username: string;
@@ -15,7 +16,7 @@ export function Leaderboard({ highlightUsername }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
-    fetch('/leaderboard')
+    fetch(`${API_BASE}/leaderboard`)
       .then((res) => res.json())
       .then((data) => setEntries(data))
       .catch((err) => console.error('Leaderboard fetch failed:', err));

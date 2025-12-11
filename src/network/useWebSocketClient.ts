@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { WS_URL } from '../config';
 import type { ClientMessage, ServerMessage } from '../types/network';
 
 type MessageCallback = (message: ServerMessage) => void;
@@ -37,12 +38,6 @@ export function useWebSocketClient() {
 
   const connect = useCallback(
     (username: string) => {
-      const baseUrl = import.meta.env.VITE_API_WS_URL;
-      if (!baseUrl) {
-        setSocketError('Missing VITE_API_WS_URL environment variable.');
-        return;
-      }
-
       lastUsernameRef.current = username;
       shouldReconnectRef.current = true;
 
@@ -52,11 +47,8 @@ export function useWebSocketClient() {
       }
 
       clearReconnectTimer();
-
-      const normalized = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-
       try {
-        const socket = new WebSocket(`${normalized}/ws?username=${encodeURIComponent(username)}`);
+        const socket = new WebSocket(`${WS_URL}?username=${encodeURIComponent(username)}`);
         socketRef.current = socket;
 
         socket.onopen = () => {
