@@ -18,6 +18,15 @@ type Game struct {
 	CurrentTurn int
 	CreatedAt   time.Time
 	Winner      *string
+	Moves       []Move
+	EndedAt     *time.Time
+}
+
+// Move captures a single turn taken during a game.
+type Move struct {
+	Player     string
+	Column     int
+	MoveNumber int
 }
 
 // GameManager creates and stores game sessions.
@@ -42,6 +51,7 @@ func (m *GameManager) CreateGame(player1, player2 string) *Game {
 		Board:       newBoard(),
 		CurrentTurn: 1,
 		CreatedAt:   time.Now().UTC(),
+		Moves:       make([]Move, 0, Rows*Columns),
 	}
 
 	m.mu.Lock()
@@ -112,14 +122,19 @@ func (m *GameManager) ApplyMove(gameID string, player string, col int) (*Game, M
 
 	game.Board = newBoard
 	game.Winner = nil
+	game.Moves = append(game.Moves, Move{Player: player, Column: col, MoveNumber: len(game.Moves) + 1})
 
 	if CheckWin(newBoard, playerNum) {
 		winner := player
 		game.Winner = &winner
+		finished := time.Now().UTC()
+		game.EndedAt = &finished
 		return game, WIN, nil
 	}
 
 	if IsBoardFull(newBoard) {
+		finished := time.Now().UTC()
+		game.EndedAt = &finished
 		return game, DRAW, nil
 	}
 
@@ -128,6 +143,9 @@ func (m *GameManager) ApplyMove(gameID string, player string, col int) (*Game, M
 	} else {
 		game.CurrentTurn = 1
 	}
+
+	// Reset EndedAt when continuing gameplay to avoid stale timestamps.
+	game.EndedAt = nil
 
 	return game, CONTINUE, nil
 }

@@ -1,18 +1,43 @@
+import { useEffect, useState } from 'react';
 import styles from './Leaderboard.module.css';
 
-export type LeaderboardEntry = {
-  rank: number;
+type LeaderboardEntry = {
   username: string;
   wins: number;
   losses: number;
 };
 
 type LeaderboardProps = {
-  entries: LeaderboardEntry[];
   highlightUsername?: string;
 };
 
-export function Leaderboard({ entries, highlightUsername }: LeaderboardProps) {
+export function Leaderboard({ highlightUsername }: LeaderboardProps) {
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch('http://localhost:8080/leaderboard')
+      .then((res) => res.json())
+      .then((data: Array<{ username: string; wins: number }>) => {
+        if (!isMounted) return;
+        const withComputed = data.map((entry) => ({
+          username: entry.username,
+          wins: entry.wins,
+          losses: 0
+        }));
+        setEntries(withComputed);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setEntries([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className={styles.wrapper} aria-labelledby="leaderboard-title">
       <header className={styles.header}>
@@ -32,11 +57,11 @@ export function Leaderboard({ entries, highlightUsername }: LeaderboardProps) {
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry) => {
+            {entries.map((entry, index) => {
               const isCurrentUser = highlightUsername && entry.username.toLowerCase() === highlightUsername.toLowerCase();
               return (
-                <tr key={entry.rank} data-active={isCurrentUser ? 'true' : undefined}>
-                  <td>{entry.rank}</td>
+                <tr key={entry.username} data-active={isCurrentUser ? 'true' : undefined}>
+                  <td>{index + 1}</td>
                   <td>{entry.username}</td>
                   <td>{entry.wins}</td>
                   <td>{entry.losses}</td>

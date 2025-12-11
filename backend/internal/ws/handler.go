@@ -14,6 +14,7 @@ import (
 	"github.com/example/connect-four/backend/internal/bot"
 	"github.com/example/connect-four/backend/internal/game"
 	"github.com/example/connect-four/backend/internal/matchmaking"
+	"github.com/example/connect-four/backend/internal/store"
 	"github.com/example/connect-four/backend/internal/types"
 )
 
@@ -29,11 +30,19 @@ type Handler struct {
 	GameMgr    *game.GameManager
 	Matchmaker *matchmaking.Matchmaker
 	Bot        *bot.Bot
+	Store      ResultStore
+}
+
+// ResultStore defines the persistence operations required by the handler.
+type ResultStore interface {
+	EnsurePlayer(username string) error
+	IncrementWin(username string) error
+	SaveCompletedGame(game *store.CompletedGame) error
 }
 
 // NewHandler constructs a Handler.
-func NewHandler(manager *Manager, gameMgr *game.GameManager, matchmaker *matchmaking.Matchmaker, botEngine *bot.Bot) *Handler {
-	return &Handler{Manager: manager, GameMgr: gameMgr, Matchmaker: matchmaker, Bot: botEngine}
+func NewHandler(manager *Manager, gameMgr *game.GameManager, matchmaker *matchmaking.Matchmaker, botEngine *bot.Bot, store ResultStore) *Handler {
+	return &Handler{Manager: manager, GameMgr: gameMgr, Matchmaker: matchmaker, Bot: botEngine, Store: store}
 }
 
 // RegisterRoutes wires the websocket endpoint.
@@ -202,6 +211,7 @@ func (h *Handler) sendGameOver(ctx context.Context, gameState *game.Game, winner
 	if draw {
 		msg := types.ServerMessage{Type: "GAME_OVER", GameID: gameState.ID, Board: gameState.Board, Result: "DRAW"}
 		h.sendToPlayers(ctx, gameState, msg, &msg)
+		h.schedulePersistence(gameState, true)
 		return
 	}
 
@@ -217,10 +227,12 @@ func (h *Handler) sendGameOver(ctx context.Context, gameState *game.Game, winner
 	if gameState.Player2 == "BOT" {
 		// Only notify the human player.
 		h.sendToPlayers(ctx, gameState, msgP1, nil)
+		h.schedulePersistence(gameState, false)
 		return
 	}
 
 	h.sendToPlayers(ctx, gameState, msgP1, &msgP2)
+	h.schedulePersistence(gameState, false)
 }
 
 func (h *Handler) sendToPlayers(ctx context.Context, gameState *game.Game, msgP1 types.ServerMessage, msgP2 *types.ServerMessage) {
@@ -234,6 +246,69 @@ func (h *Handler) sendToPlayers(ctx context.Context, gameState *game.Game, msgP1
 
 	if err := h.Manager.SendToUsername(ctx, gameState.Player2, *msgP2); err != nil {
 		log.Printf("ws: failed to send to %s: %v", gameState.Player2, err)
+	}
+}
+
+func (h *Handler) schedulePersistence(gameState *game.Game, draw bool) {
+	if h == nil || h.Store == nil || gameState == nil {
+		return
+	}
+
+	record := store.CompletedGame{
+		ID:        gameState.ID,
+		Player1:   gameState.Player1,
+		Player2:   gameState.Player2,
+		IsDraw:    draw,
+		Moves:     make([]store.CompletedMove, len(gameState.Moves)),
+		StartedAt: gameState.CreatedAt,
+	}
+
+	if gameState.EndedAt != nil {
+		record.EndedAt = *gameState.EndedAt
+	}
+
+	if record.EndedAt.IsZero() {
+		record.EndedAt = time.Now().UTC()
+	}
+
+	if gameState.Winner != nil {
+		winner := *gameState.Winner
+		record.Winner = &winner
+	}
+
+	for i, mv := range gameState.Moves {
+		record.Moves[i] = store.CompletedMove{Player: mv.Player, Column: mv.Column, MoveNumber: mv.MoveNumber}
+	}
+
+	recordCopy := record
+	go h.persistResult(recordCopy)
+}
+
+func (h *Handler) persistResult(record store.CompletedGame) {
+	if h.Store == nil {
+		return
+	}
+
+	if record.Player1 != "" {
+		if err := h.Store.EnsurePlayer(record.Player1); err != nil {
+			log.Printf("ws: ensure player %s failed: %v", record.Player1, err)
+		}
+	}
+
+	if record.Player2 != "" {
+		if err := h.Store.EnsurePlayer(record.Player2); err != nil {
+			log.Printf("ws: ensure player %s failed: %v", record.Player2, err)
+		}
+	}
+
+	if record.Winner != nil && *record.Winner != "" {
+		if err := h.Store.IncrementWin(*record.Winner); err != nil {
+			log.Printf("ws: increment win for %s failed: %v", *record.Winner, err)
+		}
+	}
+
+	if err := h.Store.SaveCompletedGame(&record); err != nil {
+		log.Printf("ws: save completed game %s failed: %v", record.ID, err)
 	}
 }
 

@@ -3,16 +3,8 @@ import { UsernameForm } from './components/UsernameForm';
 import { MatchmakingScreen } from './components/MatchmakingScreen';
 import { GameBoard } from './components/GameBoard';
 import { StatusBar } from './components/StatusBar';
-import { Leaderboard, LeaderboardEntry } from './components/Leaderboard';
+import { Leaderboard } from './components/Leaderboard';
 import { useGameController } from './state/useGameController';
-
-const leaderboardSeed: LeaderboardEntry[] = [
-  { rank: 1, username: 'backend_bot', wins: 18, losses: 3 },
-  { rank: 2, username: 'ops_guru', wins: 14, losses: 6 },
-  { rank: 3, username: 'api_architect', wins: 11, losses: 8 },
-  { rank: 4, username: 'queue_master', wins: 9, losses: 9 },
-  { rank: 5, username: 'cache_hit', wins: 7, losses: 10 }
-];
 
 export default function App() {
   const {
@@ -59,7 +51,7 @@ export default function App() {
               />
             </section>
             <aside className={styles.leaderboardPanel}>
-              <Leaderboard entries={leaderboardSeed} highlightUsername={username} />
+              <Leaderboard highlightUsername={username} />
             </aside>
           </div>
         ) : null}

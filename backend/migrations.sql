@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS players (
+    username TEXT PRIMARY KEY,
+    wins INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS games (
+    id TEXT PRIMARY KEY,
+    player1 TEXT NOT NULL,
+    player2 TEXT NOT NULL,
+    winner TEXT NULL,
+    is_draw BOOLEAN NOT NULL,
+    moves JSONB NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
