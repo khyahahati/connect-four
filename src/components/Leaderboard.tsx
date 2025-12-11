@@ -4,7 +4,7 @@ import styles from './Leaderboard.module.css';
 type LeaderboardEntry = {
   username: string;
   wins: number;
-  losses: number;
+  losses?: number;
 };
 
 type LeaderboardProps = {
@@ -15,27 +15,10 @@ export function Leaderboard({ highlightUsername }: LeaderboardProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    fetch('http://localhost:8080/leaderboard')
+    fetch('/leaderboard')
       .then((res) => res.json())
-      .then((data: Array<{ username: string; wins: number }>) => {
-        if (!isMounted) return;
-        const withComputed = data.map((entry) => ({
-          username: entry.username,
-          wins: entry.wins,
-          losses: 0
-        }));
-        setEntries(withComputed);
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setEntries([]);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+      .then((data) => setEntries(data))
+      .catch((err) => console.error('Leaderboard fetch failed:', err));
   }, []);
 
   return (
@@ -64,7 +47,7 @@ export function Leaderboard({ highlightUsername }: LeaderboardProps) {
                   <td>{index + 1}</td>
                   <td>{entry.username}</td>
                   <td>{entry.wins}</td>
-                  <td>{entry.losses}</td>
+                  <td>{entry.losses ?? 0}</td>
                 </tr>
               );
             })}
