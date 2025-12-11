@@ -8,6 +8,8 @@ import {
   type ServerGameStartPayload
 } from './gameState';
 import { evaluatePlayerMove } from './playerMoves';
+import { useWebSocketClient } from '../network/useWebSocketClient';
+import type { ServerMessage } from '../types/network';
 import {
   MOCK_BOT_ENABLED,
   MOCK_BOT_NAME,
@@ -30,24 +32,61 @@ const turnMessage = (turn: 1 | 2, you: 1 | 2, opponent?: string): string =>
 export function useGameController() {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
 
+  const { connect, disconnect, send, onMessage, connected, socketError } = useWebSocketClient();
+
+  const handleServerGameStart = useCallback((payload: ServerGameStartPayload) => {
+    const nextTurn = payload.firstTurn ?? payload.you;
+    dispatch({
+      type: 'SERVER_GAME_START',
+      payload: {
+        ...payload,
+        firstTurn: nextTurn,
+        message: payload.message ?? turnMessage(nextTurn, payload.you, payload.opponent)
+      }
+    });
+  }, [dispatch]);
+
+  const handleServerBoardUpdate = useCallback((payload: ServerBoardUpdatePayload) => {
+    dispatch({
+      type: 'SERVER_BOARD_UPDATE',
+      payload: {
+        ...payload,
+        message: payload.message ?? turnMessage(payload.currentTurn, state.you, state.opponent)
+      }
+    });
+  }, [dispatch, state.opponent, state.you]);
+
+  const handleServerGameOver = useCallback((payload: ServerGameOverPayload) => {
+    const fallbackMessage =
+      payload.result === 'WIN'
+        ? playerWinMessage
+        : payload.result === 'LOSS'
+          ? `${state.opponent ?? 'Opponent'} connected four.`
+          : drawMessage;
+
+    dispatch({
+      type: 'SERVER_GAME_OVER',
+      payload: {
+        ...payload,
+        message: payload.message ?? fallbackMessage
+      }
+    });
+  }, [dispatch, state.opponent]);
+
   const sendMakeMoveToServer = useCallback((columnIndex: number) => {
-    // TODO: emit MAKE_MOVE message through WebSocket client when online mode is active.
-  }, []);
+    if (!state.gameId || !state.username || !connected) {
+      return;
+    }
 
-  const handleServerGameStart = useCallback((_payload: ServerGameStartPayload) => {
-    // TODO: dispatch SERVER_GAME_START when backend start event arrives.
-  }, []);
-
-  const handleServerBoardUpdate = useCallback((_payload: ServerBoardUpdatePayload) => {
-    // TODO: dispatch SERVER_BOARD_UPDATE when backend board state updates.
-  }, []);
-
-  const handleServerGameOver = useCallback((_payload: ServerGameOverPayload) => {
-    // TODO: dispatch SERVER_GAME_OVER when backend signals game completion.
-  }, []);
+    send({
+      type: 'MAKE_MOVE',
+      col: columnIndex,
+      gameId: state.gameId
+    });
+  }, [connected, send, state.gameId, state.username]);
 
   useEffect(() => {
-    if (state.screen !== 'MATCHMAKING') {
+    if (state.gameMode !== 'LOCAL' || state.screen !== 'MATCHMAKING') {
       return;
     }
 
@@ -64,9 +103,13 @@ export function useGameController() {
     }, MATCHMAKING_DELAY_MS);
 
     return () => window.clearTimeout(timerId);
-  }, [dispatch, state.screen]);
+  }, [dispatch, state.gameMode, state.screen]);
 
   useEffect(() => {
+    if (state.gameMode !== 'LOCAL') {
+      return;
+    }
+
     if (!MOCK_BOT_ENABLED || state.opponent !== MOCK_BOT_NAME) {
       return;
     }
@@ -106,7 +149,7 @@ export function useGameController() {
     });
 
     return () => cancelMockBotTurn(timerId);
-  }, [dispatch, state.board, state.currentTurn, state.opponent, state.result, state.screen, state.you]);
+  }, [dispatch, state.board, state.currentTurn, state.gameMode, state.opponent, state.result, state.screen, state.you]);
 
   const submitUsername = useCallback(
     (value: string) => {
@@ -173,18 +216,103 @@ export function useGameController() {
   );
 
   const handleRestart = useCallback(() => {
-    dispatch(gameActions.resetGame());
-  }, [dispatch]);
+    if (state.gameMode === 'LOCAL') {
+      dispatch(gameActions.resetGame());
+      return;
+    }
+
+    if (!state.username) {
+      return;
+    }
+
+    send({
+      type: 'RECONNECT',
+      username: state.username,
+      gameId: state.gameId
+    });
+  }, [dispatch, send, state.gameId, state.gameMode, state.username]);
+
+  useEffect(() => {
+    const shouldConnect = state.gameMode === 'ONLINE' && Boolean(state.username) && state.screen !== 'ENTER_NAME';
+
+    if (shouldConnect) {
+      connect(state.username);
+    } else {
+      disconnect();
+    }
+  }, [connect, disconnect, state.gameMode, state.screen, state.username]);
+
+  useEffect(() => {
+    if (state.gameMode !== 'ONLINE') {
+      return;
+    }
+
+    if (!connected || !state.username) {
+      return;
+    }
+
+    send({
+      type: 'RECONNECT',
+      username: state.username,
+      gameId: state.gameId
+    });
+  }, [connected, send, state.gameId, state.gameMode, state.username]);
+
+  useEffect(() => {
+    if (state.gameMode !== 'ONLINE') {
+      return;
+    }
+
+    if (!socketError) {
+      return;
+    }
+
+    dispatch(gameActions.setMessage(socketError));
+  }, [dispatch, socketError, state.gameMode]);
+
+  useEffect(() => {
+    if (state.gameMode !== 'ONLINE') {
+      return;
+    }
+
+    const unsubscribe = onMessage((message: ServerMessage) => {
+      switch (message.type) {
+        case 'GAME_START':
+          handleServerGameStart({
+            gameId: message.gameId,
+            you: message.you,
+            opponent: message.opponent
+          });
+          break;
+        case 'BOARD_UPDATE':
+          handleServerBoardUpdate({
+            board: message.board,
+            currentTurn: message.currentTurn
+          });
+          break;
+        case 'GAME_OVER':
+          handleServerGameOver({
+            result: message.result,
+            board: message.board
+          });
+          break;
+        case 'INFO':
+          dispatch(gameActions.setMessage(message.message));
+          break;
+        default:
+          break;
+      }
+    });
+
+    return unsubscribe;
+  }, [dispatch, handleServerBoardUpdate, handleServerGameOver, handleServerGameStart, onMessage, state.gameMode]);
 
   return {
     state,
     actions: {
       submitUsername,
       handleColumnClick,
-      handleRestart,
-      handleServerGameStart,
-      handleServerBoardUpdate,
-      handleServerGameOver
+      handleRestart
     }
   };
 }

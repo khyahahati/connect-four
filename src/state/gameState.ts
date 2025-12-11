@@ -44,6 +44,7 @@ export interface ServerGameStartPayload {
   gameId: string;
   you: 1 | 2;
   opponent: string;
+  firstTurn?: 1 | 2;
   message?: string;
   board?: number[][];
 }
@@ -92,7 +93,7 @@ export const initialGameState: GameState = {
   gameId: undefined,
   result: undefined,
   message: 'Enter a username to start a match.',
-  gameMode: 'LOCAL'
+  gameMode: 'ONLINE'
 };
 
 export function setUsername(state: GameState, username: string): GameState {
@@ -183,6 +184,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return startGame(state, {
         opponent: action.payload.opponent,
         you: action.payload.you,
+        firstTurn: action.payload.firstTurn,
         board: action.payload.board,
         gameId: action.payload.gameId,
         message: action.payload.message

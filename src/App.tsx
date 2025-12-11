@@ -20,7 +20,7 @@ export default function App() {
     actions: { submitUsername, handleColumnClick, handleRestart }
   } = useGameController();
 
-  const { screen, username, opponent, board, currentTurn, you, result, message } = state;
+  const { screen, username, opponent, board, currentTurn, you, result, message, gameMode } = state;
   const isBoardInteractive = screen === 'IN_GAME' && currentTurn === you && !result;
 
   return (
@@ -28,13 +28,13 @@ export default function App() {
       <main className={styles.mainPanel}>
         {screen === 'ENTER_NAME' && (
           <section className={styles.sectionCard}>
-            <UsernameForm onSubmit={submitUsername} />
+            <UsernameForm onSubmit={submitUsername} mode={gameMode} />
           </section>
         )}
 
         {screen === 'MATCHMAKING' && (
           <section className={styles.sectionCard}>
-            <MatchmakingScreen username={username} />
+            <MatchmakingScreen username={username} mode={gameMode} />
           </section>
         )}
 

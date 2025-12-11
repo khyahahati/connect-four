@@ -1,13 +1,20 @@
 import { FormEvent, useState } from 'react';
 import styles from './UsernameForm.module.css';
+import type { GameMode } from '../state/gameState';
 
 type UsernameFormProps = {
   onSubmit: (username: string) => void;
+  mode: GameMode;
 };
 
-export function UsernameForm({ onSubmit }: UsernameFormProps) {
+export function UsernameForm({ onSubmit, mode }: UsernameFormProps) {
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
+
+  const subtitleCopy =
+    mode === 'LOCAL'
+      ? 'Pick a username so we can match you with the backend bot. Dark mode is always on to keep eyes fresh during long reviews.'
+      : 'Pick a username so we can sync you with the multiplayer service. Dark mode is always on to keep eyes fresh during long reviews.';
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,7 +34,7 @@ export function UsernameForm({ onSubmit }: UsernameFormProps) {
         <p className={styles.tag}>Phase 1 / Frontend</p>
         <h1 className={styles.title}>Connect Four - Engineering Lobby</h1>
         <p className={styles.subtitle}>
-          Pick a username so we can match you with the backend bot. Dark mode is always on to keep eyes fresh during long reviews.
+          {subtitleCopy}
         </p>
       </header>
       <form className={styles.form} onSubmit={handleSubmit} noValidate>
