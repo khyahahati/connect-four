@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: dark;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+
+  /* base surfaces */
+  --bg: #131721;
+  --surface: #1c2230;
+  --surface-muted: #1a1f2c;
+  --surface-accent: #273041;
+
+  /* text */
+  --text-primary: #f5f7fb;
+  --text-secondary: #d2d7e5;
+  --text-muted: #a3acc6;
+  --text-placeholder: rgba(245, 247, 251, 0.38);
+
+  /* borders */
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* spacing scale */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 2.75rem;
+
+  /* brand accents */
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.18);
+  --accent-ring: rgba(56, 189, 248, 0.6);
+  --accent-glow: rgba(87, 224, 255, 0.28);
+  --accent-overlay: rgba(56, 189, 248, 0.12);
+  --accent-overlay-hover: rgba(56, 189, 248, 0.08);
+  --warning: #f87171;
+
+  /* gameplay colours */
+  --disc-p1: #facc15;
+  --disc-p2: #38bdf8;
+  --disc-p1-glow: rgba(250, 204, 21, 0.28);
+  --disc-p2-glow: rgba(87, 224, 255, 0.22);
+  --disc-outline: rgba(255, 255, 255, 0.18);
+  --disc-depth: rgba(0, 0, 0, 0.35);
+
+  /* effects */
+  --shadow-soft: 0 20px 48px rgba(5, 12, 32, 0.45);
+  --shadow-inner: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+
+  /* supportive surfaces */
+  --surface-highlight: rgba(255, 255, 255, 0.02);
+  --surface-divider: rgba(255, 255, 255, 0.05);
+
+  /* text on accent */
+  --text-on-accent: #021321;
+
+  /* legacy aliases */
+  --bg-body: var(--bg);
+  --bg-surface: var(--surface);
+  --bg-surface-subtle: var(--surface-muted);
+  --bg-accent: var(--surface-accent);
+  --border-muted: var(--border);
+  --player-one: var(--disc-p1);
+  --player-two: var(--disc-p2);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: inherit;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}

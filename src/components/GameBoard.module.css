@@ -1,0 +1,129 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.legendDot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  display: inline-block;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-muted);
+  position: relative;
+}
+.legendDot[data-player='self'] {
+  background: var(--disc-p1);
+  border-color: var(--disc-p1);
+}
+
+.legendDot[data-player='opponent'] {
+  background: var(--disc-p2);
+  border-color: var(--disc-p2);
+}
+
+.legendSeparator {
+  color: var(--text-muted);
+  opacity: 0.65;
+  padding-inline: 0.4rem;
+}
+
+.board {
+  background: var(--surface-accent);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: clamp(var(--spacing-sm), 2vw, var(--spacing-md));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.45rem, 1.5vw, 0.65rem);
+  box-shadow: var(--shadow-inner);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: clamp(0.45rem, 1.5vw, 0.65rem);
+}
+
+.cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.cell:disabled {
+  cursor: not-allowed;
+}
+
+.actionable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+  border-color: var(--accent);
+}
+
+.actionable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-color: var(--accent);
+}
+
+.disc {
+  width: 68%;
+  height: 68%;
+  border-radius: 50%;
+  border: 2px solid var(--disc-outline);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--disc-depth);
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.discPlayerOne {
+  background: var(--disc-p1);
+  box-shadow: inset 0 2px 4px var(--disc-depth), 0 10px 22px var(--disc-p1-glow);
+}
+
+.discPlayerTwo {
+  background: var(--disc-p2);
+  box-shadow: inset 0 2px 4px var(--disc-depth), 0 10px 22px var(--disc-p2-glow);
+}
+
+.playerOne {
+  border-color: var(--disc-p1);
+}
+
+.playerTwo {
+  border-color: var(--disc-p2);
+}
+
+.cellIndex {
+  position: absolute;
+  bottom: 6%;
+  right: 8%;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-placeholder);
+  letter-spacing: 0.02em;
+}
+
+.helper {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}

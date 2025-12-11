@@ -1,0 +1,50 @@
+.appShell {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-sm) calc(var(--spacing-xl) + 0.5rem);
+}
+
+.mainPanel {
+  width: min(1100px, 100%);
+}
+
+.sectionCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl) clamp(var(--spacing-md), 4vw, var(--spacing-xl));
+  box-shadow: var(--shadow-soft);
+}
+
+.gameLayout {
+  display: grid;
+  gap: 1.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 960px) {
+  .gameLayout {
+    grid-template-columns: 7fr 5fr;
+  }
+}
+
+.gamePanel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(var(--spacing-md), 3vw, var(--spacing-lg));
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.leaderboardPanel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(var(--spacing-md), 3vw, calc(var(--spacing-lg) + 0.25rem));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), var(--shadow-soft);
+}

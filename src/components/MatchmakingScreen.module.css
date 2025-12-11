@@ -1,0 +1,68 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-lg) - 0.25rem);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  font-weight: 600;
+}
+
+.body {
+  margin: 0;
+  color: var(--text-secondary);
+  max-width: 55ch;
+}
+
+.panel {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-sm) + 0.25rem);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) calc(var(--spacing-md) + 0.25rem);
+  box-shadow: var(--shadow-inner);
+}
+
+.spinner {
+  width: calc(var(--spacing-lg) * 1.2);
+  height: calc(var(--spacing-lg) * 1.2);
+  border-radius: 50%;
+  border: 3px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  animation: rotate 1.1s linear infinite;
+}
+
+.statusCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statusHeadline {
+  margin: 0;
+  font-weight: 500;
+}
+
+.statusSubline {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
