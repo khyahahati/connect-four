@@ -3,7 +3,7 @@
 ## Project Overview
 This is my real-time Connect Four game that you can play either online against other people or hop in against my built-in bot. I wired it up with a Go backend and a React/Vite frontend, and the live matches run through WebSockets so turns update instantly. I stash finished games and the shared leaderboard in Postgres so stats stick around between sessions.
 
-Live App:
+Live App: https://frontend-production-b8a6.up.railway.app
 
 
 ## Features
@@ -84,4 +84,7 @@ VITE_API_WS_URL=ws://localhost:8080/ws
 ```
 
 ## Deployment
-I plan to host the backend on Railway, Render, or Fly.io, and the frontend on Vercel or GitHub Pages. Postgres can live on Railway or Neon. (Links coming soon.)
+Both the backend and frontend run on Railway.
+- Frontend: https://frontend-production-b8a6.up.railway.app
+- Backend (HTTP): https://backend-production-3edf2.up.railway.app
+- WebSocket endpoint: wss://backend-production-3edf2.up.railway.app/ws
