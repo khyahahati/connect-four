@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useReducer } from 'react';
-import { gameActions, gameReducer, initialGameState } from './gameState';
+import {
+  gameActions,
+  gameReducer,
+  initialGameState,
+  type ServerBoardUpdatePayload,
+  type ServerGameOverPayload,
+  type ServerGameStartPayload
+} from './gameState';
 import { evaluatePlayerMove } from './playerMoves';
 import {
   MOCK_BOT_ENABLED,
@@ -22,6 +29,22 @@ const turnMessage = (turn: 1 | 2, you: 1 | 2, opponent?: string): string =>
 
 export function useGameController() {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
+
+  const sendMakeMoveToServer = useCallback((columnIndex: number) => {
+    // TODO: emit MAKE_MOVE message through WebSocket client when online mode is active.
+  }, []);
+
+  const handleServerGameStart = useCallback((_payload: ServerGameStartPayload) => {
+    // TODO: dispatch SERVER_GAME_START when backend start event arrives.
+  }, []);
+
+  const handleServerBoardUpdate = useCallback((_payload: ServerBoardUpdatePayload) => {
+    // TODO: dispatch SERVER_BOARD_UPDATE when backend board state updates.
+  }, []);
+
+  const handleServerGameOver = useCallback((_payload: ServerGameOverPayload) => {
+    // TODO: dispatch SERVER_GAME_OVER when backend signals game completion.
+  }, []);
 
   useEffect(() => {
     if (state.screen !== 'MATCHMAKING') {
@@ -103,35 +126,50 @@ export function useGameController() {
         return;
       }
 
-      const evaluation = evaluatePlayerMove(state.board, columnIndex, state.you);
+      if (state.gameMode === 'LOCAL') {
+        const evaluation = evaluatePlayerMove(state.board, columnIndex, state.you);
 
-      if (evaluation.type === 'COLUMN_FULL') {
-        dispatch(gameActions.setMessage(columnFullMessage));
+        if (evaluation.type === 'COLUMN_FULL') {
+          dispatch(gameActions.setMessage(columnFullMessage));
+          return;
+        }
+
+        if (evaluation.type === 'WIN') {
+          dispatch(gameActions.updateBoard({ board: evaluation.board, currentTurn: state.you, message: playerWinMessage }));
+          dispatch(gameActions.endGame({ result: 'WIN', message: playerWinMessage, board: evaluation.board }));
+          return;
+        }
+
+        if (evaluation.type === 'DRAW') {
+          dispatch(gameActions.updateBoard({ board: evaluation.board, currentTurn: state.you, message: drawMessage }));
+          dispatch(gameActions.endGame({ result: 'DRAW', message: drawMessage, board: evaluation.board }));
+          return;
+        }
+
+        const nextTurn: 1 | 2 = state.you === 1 ? 2 : 1;
+        dispatch(
+          gameActions.updateBoard({
+            board: evaluation.board,
+            currentTurn: nextTurn,
+            message: turnMessage(nextTurn, state.you, state.opponent)
+          })
+        );
         return;
       }
 
-      if (evaluation.type === 'WIN') {
-        dispatch(gameActions.updateBoard({ board: evaluation.board, currentTurn: state.you, message: playerWinMessage }));
-        dispatch(gameActions.endGame({ result: 'WIN', message: playerWinMessage, board: evaluation.board }));
-        return;
-      }
-
-      if (evaluation.type === 'DRAW') {
-        dispatch(gameActions.updateBoard({ board: evaluation.board, currentTurn: state.you, message: drawMessage }));
-        dispatch(gameActions.endGame({ result: 'DRAW', message: drawMessage, board: evaluation.board }));
-        return;
-      }
-
-      const nextTurn: 1 | 2 = state.you === 1 ? 2 : 1;
-      dispatch(
-        gameActions.updateBoard({
-          board: evaluation.board,
-          currentTurn: nextTurn,
-          message: turnMessage(nextTurn, state.you, state.opponent)
-        })
-      );
+      sendMakeMoveToServer(columnIndex);
     },
-    [dispatch, state.board, state.currentTurn, state.opponent, state.result, state.screen, state.you]
+    [
+      dispatch,
+      sendMakeMoveToServer,
+      state.board,
+      state.currentTurn,
+      state.gameMode,
+      state.opponent,
+      state.result,
+      state.screen,
+      state.you
+    ]
   );
 
   const handleRestart = useCallback(() => {
@@ -143,7 +181,10 @@ export function useGameController() {
     actions: {
       submitUsername,
       handleColumnClick,
-      handleRestart
+      handleRestart,
+      handleServerGameStart,
+      handleServerBoardUpdate,
+      handleServerGameOver
     }
   };
 }

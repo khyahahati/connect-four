@@ -4,6 +4,8 @@ export type Screen = 'ENTER_NAME' | 'MATCHMAKING' | 'IN_GAME' | 'GAME_OVER';
 
 export type GameResult = 'WIN' | 'LOSS' | 'DRAW';
 
+export type GameMode = 'LOCAL' | 'ONLINE';
+
 export interface GameState {
   screen: Screen;
   username: string;
@@ -14,6 +16,7 @@ export interface GameState {
   gameId?: string;
   result?: GameResult;
   message?: string;
+  gameMode: GameMode;
 }
 
 export interface StartGamePayload {
@@ -37,6 +40,26 @@ export interface EndGamePayload {
   board?: number[][];
 }
 
+export interface ServerGameStartPayload {
+  gameId: string;
+  you: 1 | 2;
+  opponent: string;
+  message?: string;
+  board?: number[][];
+}
+
+export interface ServerBoardUpdatePayload {
+  board: number[][];
+  currentTurn: 1 | 2;
+  message?: string;
+}
+
+export interface ServerGameOverPayload {
+  result: GameResult;
+  board: number[][];
+  message?: string;
+}
+
 export type GameAction =
   | { type: 'SET_USERNAME'; username: string }
   | { type: 'CHANGE_SCREEN'; screen: Screen; message?: string }
@@ -44,7 +67,10 @@ export type GameAction =
   | { type: 'UPDATE_BOARD'; payload: UpdateBoardPayload }
   | { type: 'END_GAME'; payload: EndGamePayload }
   | { type: 'RESET_GAME' }
-  | { type: 'SET_MESSAGE'; message: string };
+  | { type: 'SET_MESSAGE'; message: string }
+  | { type: 'SERVER_GAME_START'; payload: ServerGameStartPayload }
+  | { type: 'SERVER_BOARD_UPDATE'; payload: ServerBoardUpdatePayload }
+  | { type: 'SERVER_GAME_OVER'; payload: ServerGameOverPayload };
 
 const ROWS = 6;
 const COLUMNS = 7;
@@ -65,7 +91,8 @@ export const initialGameState: GameState = {
   you: 1,
   gameId: undefined,
   result: undefined,
-  message: 'Enter a username to start a match.'
+  message: 'Enter a username to start a match.',
+  gameMode: 'LOCAL'
 };
 
 export function setUsername(state: GameState, username: string): GameState {
@@ -152,6 +179,27 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return resetGame(state);
     case 'SET_MESSAGE':
       return setMessage(state, action.message);
+    case 'SERVER_GAME_START': {
+      return startGame(state, {
+        opponent: action.payload.opponent,
+        you: action.payload.you,
+        board: action.payload.board,
+        gameId: action.payload.gameId,
+        message: action.payload.message
+      });
+    }
+    case 'SERVER_BOARD_UPDATE':
+      return updateBoard(state, {
+        board: action.payload.board,
+        currentTurn: action.payload.currentTurn,
+        message: action.payload.message
+      });
+    case 'SERVER_GAME_OVER':
+      return endGame(state, {
+        result: action.payload.result,
+        board: action.payload.board,
+        message: action.payload.message
+      });
     default:
       return state;
   }
